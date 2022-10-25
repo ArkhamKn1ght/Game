@@ -13,7 +13,7 @@ void checkNetwork(Engine *game, Object *obj) {
     sf::IpAddress tempIp;
     unsigned short tempPort;
     sf::Packet packet;
-    socket.bind(2002, "192.168.0.102");
+    socket.bind(2002, "192.168.116.2");
     while (true) {
         
         
@@ -64,22 +64,22 @@ int main()
         }
         if (flag) {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-                game.moveObject(&obj, -2.5f, 0, 1);
+                game.moveObject(&obj, -2.5f + obj.getX0(), 0 + obj.getY0(), 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-                game.moveObject(&obj, 2.5f, 0, 1);
+                game.moveObject(&obj, 2.5f + obj.getX0(), 0 + obj.getY0(), 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-                game.moveObject(&obj, 0, -2.5f, 1);
+                game.moveObject(&obj, 0 + obj.getX0(), -2.5f + obj.getY0(), 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-                game.moveObject(&obj, 0, 2.5f, 1);
+                game.moveObject(&obj, 0 + obj.getX0(), 2.5f + obj.getY0(), 1);
             }
        }
         
         
         window.clear();
-        game.drawMap(&window);
+        //game.drawMap(&window);
         obj.drawObject(&window);
         obj2.drawObject(&window);
         wall.drawObject(&window);
