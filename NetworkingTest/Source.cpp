@@ -7,29 +7,7 @@
 
 #define NULL 0 
 
-void checkNetwork(Engine *game, Object *obj) {
-    sf::UdpSocket socket;
-    socket.setBlocking(false);
-    sf::IpAddress tempIp;
-    unsigned short tempPort;
-    sf::Packet packet;
-    socket.bind(2002, "192.168.116.2");
-    while (true) {
-        
-        
-        
-        if (socket.receive(packet, tempIp, tempPort) != sf::Socket::Done) {
 
-        }
-        else {
-            float x = 0;
-            float y = 0;
-            packet >> x >> y;
-            game->moveObject(obj, x, y, 0);
-        }
-    }
-    return;
-}
 int main()
 {
     bool flag = 1;
@@ -46,8 +24,8 @@ int main()
     game.addObject(&obj);
     game.addObject(&obj2);
     game.addObject(&wall);
-    std::thread th(checkNetwork, &game, &obj2);
-    th.detach();
+    game.setUpNetwork("192.168.0.102", "192.168.0.102", 2000, 2001);
+   
     while (window.isOpen())
     {
         sf::Event event;
@@ -62,24 +40,26 @@ int main()
                 flag = 0;
             }
         }
+        game.receivePacket();
+        game.correctMovement(obj2);
         if (flag) {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-                game.moveObject(&obj, -2.5f + obj.getX0(), 0 + obj.getY0(), 1);
+                game.moveObject(&obj, -2.5f, 0, 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-                game.moveObject(&obj, 2.5f + obj.getX0(), 0 + obj.getY0(), 1);
+                game.moveObject(&obj, 2.5f, 0, 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-                game.moveObject(&obj, 0 + obj.getX0(), -2.5f + obj.getY0(), 1);
+                game.moveObject(&obj, 0, -2.5f, 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-                game.moveObject(&obj, 0 + obj.getX0(), 2.5f + obj.getY0(), 1);
+                game.moveObject(&obj, 0, 2.5f, 1);
             }
        }
         
         
         window.clear();
-        //game.drawMap(&window);
+        game.drawMap(&window);
         obj.drawObject(&window);
         obj2.drawObject(&window);
         wall.drawObject(&window);
