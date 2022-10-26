@@ -129,6 +129,7 @@ void Engine::handleNetwork() {
 		processPackets();
 		resetClock();
 	}
+	th.join();
 	
 	
 }
