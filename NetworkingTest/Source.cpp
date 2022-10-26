@@ -4,15 +4,31 @@
 #include <iostream>
 #include "Engine.h"
 #include <thread>
+#include <functional>
 
 #define NULL 0 
 
+void startNetwork(Engine &engine) {
+    sf::IpAddress tempDestIp;
+    unsigned short tempDestPort;
+    sf::IpAddress tempLocalIp;
+    unsigned short tempLocalPort;
+    std::cout << "Enter destIp: "; 
+    std::cin >> tempDestIp;
+    std::cout << "Enter destPort: ";
+    std::cin >> tempDestPort;
+    std::cout << "Enter localIp: ";
+    std::cin >> tempLocalIp;
+    std::cout << "Enter localPort: ";
+    std::cin >> tempLocalPort;
+    engine.setUpNetwork(tempLocalIp, tempDestIp, tempLocalPort, tempDestPort);
+}
 
 int main()
 {
     bool flag = 1;
-    sf::RenderWindow window(sf::VideoMode(900, 900), "Tiles test");
-    window.setFramerateLimit(144);
+    
+    
     
     Object nullObj(NULL);
     
@@ -24,15 +40,22 @@ int main()
     game.addObject(&obj);
     game.addObject(&obj2);
     game.addObject(&wall);
-    game.setUpNetwork("192.168.0.102", "192.168.0.102", 2000, 2001);
-   
+
+    startNetwork(game);
+    game.setTickrate(10);
+    game.startNetworkThread();
+    sf::RenderWindow window(sf::VideoMode(900, 900), "Dimas pidoras");
+    window.setFramerateLimit(144);
     while (window.isOpen())
     {
         sf::Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed) {
+                game.exit();
                 window.close();
+            }
+                
             if (event.type == sf::Event::GainedFocus) {
                 flag = 1;
             }
@@ -40,20 +63,21 @@ int main()
                 flag = 0;
             }
         }
-        game.receivePacket();
-        game.correctMovement(obj2);
+        //game.setElapsedTime();
+        //game.receivePacket();
+        //game.correctMovement(obj);
         if (flag) {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-                game.moveObject(&obj, -2.5f, 0, 1);
+                game.moveObject(&obj2, -2.5f, 0, 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-                game.moveObject(&obj, 2.5f, 0, 1);
+                game.moveObject(&obj2, 2.5f, 0, 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-                game.moveObject(&obj, 0, -2.5f, 1);
+                game.moveObject(&obj2, 0, -2.5f, 1);
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-                game.moveObject(&obj, 0, 2.5f, 1);
+                game.moveObject(&obj2, 0, 2.5f, 1);
             }
        }
         
@@ -65,6 +89,6 @@ int main()
         wall.drawObject(&window);
         window.display();
     }
-
+    system("pause");
     return 0;
 }

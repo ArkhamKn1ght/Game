@@ -1,6 +1,7 @@
 #pragma once
 #include "Map.h"
 #include "SFML/Network.hpp"
+#include <thread>
 class Engine
 {
 public:
@@ -15,9 +16,18 @@ public:
 		unsigned short tempLocalPort, unsigned short tempDestPort);
 	void sendPacket(sf::Packet tempPacket, sf::IpAddress tempDestIp, unsigned short tempDestPort);
 	void receivePacket();
-	void correctMovement(Object& obj);
+	void setTickrate(int tickrate);
+
+	void resetClock();
+	void setElapsedTime();
+	void handleNetwork();
+	void startNetworkThread();
+	void exit();
+	void processPackets();
+	Object* getObject(int ID);
 	
 private:
+	bool fExit = 0;
 	Map map;
 	int tileSize;
 
@@ -32,6 +42,17 @@ private:
 
 	sf::UdpSocket socket;
 	sf::Packet packet;
+
+	sf::Time time;
+	sf::Clock clock;
+	std::thread th;
+
+	int timeInMillis = 0; 
+	unsigned int elapsedTime = 0;
+	enum packetCode : unsigned int {correctPosition = 1, adjustPosition
+	};
+
+	std::vector<Object*> objects;
 
 };
 

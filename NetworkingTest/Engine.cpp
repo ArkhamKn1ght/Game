@@ -18,6 +18,7 @@ void Engine::drawMap(sf::RenderWindow* wnd) {
 
 void Engine::addObject(Object* obj) {
 	map.addObjectToMap(obj);
+	objects.push_back(obj);
 
 }
 
@@ -31,43 +32,30 @@ void Engine::moveObject(Object* obj, float x, float y, bool sendData) {
 		float tempY = tempY0 + y;
 		obj->setX0(tempX);
 		obj->setY0(tempY);
-		if (!map.checkForCollision(obj)) {
+		if (!map.checkForCollision(obj) && tempX + obj->getWidth() <= tileSize * map.getTileX()
+			&& tempY + obj->getHeight() <= tileSize * map.getTileY()
+			&& tempX >= 0 && tempY >= 0) {
+			if (timeInMillis <= elapsedTime && sendData) {
+				sf::Packet tempPacket;
+				tempPacket.clear();
+				tempPacket << packetCode::adjustPosition << obj->getObjID() << tempX << tempY;
+				sendPacket(tempPacket, destIp, destPort);
+			}
 			obj->setX0(tempX0);
 			obj->setY0(tempY0);
 			map.removeObjectFromMap(obj);
 			obj->setX0(tempX);
 			obj->setY0(tempY);
 			map.addObjectToMap(obj);
-			sf::Packet tempPacket;
-			tempPacket.clear();
-			tempPacket << tempX << tempY;
-			sendPacket(tempPacket, destIp, destPort);
+			
+			
 		}
 		else {
 			obj->setX0(tempX0);
 			obj->setY0(tempY0);
 		}
 	}
-	else {
-		float tempX0 = obj->getX0();
-		float tempY0 = obj->getY0();
-		float tempX = x;
-		float tempY = y;
-		obj->setX0(tempX);
-		obj->setY0(tempY);
-		if (!map.checkForCollision(obj)) {
-			obj->setX0(tempX0);
-			obj->setY0(tempY0);
-			map.removeObjectFromMap(obj);
-			obj->setX0(tempX);
-			obj->setY0(tempY);
-			map.addObjectToMap(obj);
-		}
-		else {
-			obj->setX0(tempX0);
-			obj->setY0(tempY0);
-		}
-	}
+	
 	
 	
 }
@@ -79,7 +67,9 @@ void Engine::moveObjectTo(Object* obj, float x, float y) {
 	float tempY = y;
 	obj->setX0(tempX);
 	obj->setY0(tempY);
-	if (!map.checkForCollision(obj)) {
+	if (!map.checkForCollision(obj) && tempX + obj->getWidth() <= tileSize * map.getTileX()
+		&& tempY + obj->getHeight() <= tileSize * map.getTileY()
+		&& tempX >= 0 && tempY >= 0) {
 		obj->setX0(tempX0);
 		obj->setY0(tempY0);
 		map.removeObjectFromMap(obj);
@@ -90,6 +80,10 @@ void Engine::moveObjectTo(Object* obj, float x, float y) {
 	else {
 		obj->setX0(tempX0);
 		obj->setY0(tempY0);
+		sf::Packet tempPacket;
+		tempPacket.clear();
+		tempPacket << packetCode::correctPosition  << obj->getObjID()  << tempX0 << tempY0;
+		sendPacket(tempPacket, destIp, destPort);
 	}
 }
 
@@ -108,14 +102,74 @@ void Engine::sendPacket(sf::Packet tempPacket, sf::IpAddress tempDestIp, unsigne
 }
 
 void Engine::receivePacket() {
-	socket.receive(packet, lastReceivedIp, lastReceivedPort);
+	if (timeInMillis <= elapsedTime) {
+		socket.receive(packet, lastReceivedIp, lastReceivedPort);
+	}
+	
 }
 
-void Engine::correctMovement(Object &obj) {
-	if (packet.getDataSize() > 0) {
-		float tempX, tempY = 0;
-		packet >> tempX >> tempY;
-		moveObjectTo(&obj, tempX, tempY);
-		packet.clear();
+
+
+void Engine::setElapsedTime() {
+	elapsedTime = clock.getElapsedTime().asMilliseconds();
+}
+
+void Engine::setTickrate(int tickrate) {
+	timeInMillis = 1 / tickrate;
+}
+
+void Engine::resetClock() {
+	clock.restart();
+	elapsedTime = 0;
+}
+void Engine::handleNetwork() {
+	while (true && !fExit) {
+		setElapsedTime();
+		receivePacket();
+		processPackets();
+		resetClock();
 	}
+	
+	
+}
+void Engine::startNetworkThread() {
+	th = std::thread(&Engine::handleNetwork, this);
+	
+}
+
+void Engine::exit() {
+	fExit = 1;
+}
+
+void Engine::processPackets() {
+	sf::IpAddress tempIp;
+	unsigned short tempPort;
+	unsigned int tempPacketCode = 0;
+	float tempX;
+	float tempY;
+	int tempID = -123;
+	packet >> tempPacketCode;
+	if (tempPacketCode == packetCode::correctPosition) {
+		packet >>  tempID >> tempX >> tempY;
+		getObject(tempID)->setX0(tempX);
+		getObject(tempID)->setX0(tempY);
+		
+	}
+	else if (tempPacketCode == packetCode::adjustPosition) {
+		if (timeInMillis <= elapsedTime) {
+			packet >>  tempID >> tempX >> tempY;
+			moveObjectTo(getObject(tempID), tempX, tempY);
+			
+		}
+	}
+	packet.clear();
+}
+
+Object* Engine::getObject(int ID) {
+	for (std::vector<Object*>::iterator it = objects.begin(); it != objects.end(); ++it) {
+		if ((*it)->getObjID() == ID) {
+			return *it;
+		}
+	}
+	return 0;
 }
