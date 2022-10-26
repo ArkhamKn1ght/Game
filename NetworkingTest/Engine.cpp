@@ -129,7 +129,6 @@ void Engine::handleNetwork() {
 		processPackets();
 		resetClock();
 	}
-	th.join();
 	
 	
 }
@@ -138,8 +137,12 @@ void Engine::startNetworkThread() {
 	
 }
 
-void Engine::exit() {
+
+
+void Engine::stopThread() {
 	fExit = 1;
+	th.join();
+	
 }
 
 void Engine::processPackets() {

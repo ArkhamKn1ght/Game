@@ -22,8 +22,9 @@ public:
 	void setElapsedTime();
 	void handleNetwork();
 	void startNetworkThread();
-	void exit();
+
 	void processPackets();
+	void stopThread();
 	Object* getObject(int ID);
 	
 private:

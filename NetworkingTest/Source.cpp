@@ -52,7 +52,7 @@ int main()
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed) {
-                game.exit();
+                game.stopThread();
                 window.close();
             }
                 
